@@ -5,7 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Express</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; display: flex; flex-direction: column; height: 100vh; margin: 0; padding: 15px; box-sizing: border-box; }
+        /* Correction : Ajout du padding-bottom pour la barre Samsung */
+        body { 
+            font-family: sans-serif; 
+            background: #121212; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            margin: 0; 
+            padding: 15px; 
+            padding-bottom: env(safe-area-inset-bottom, 30px); /* Zone de sécurité */
+            box-sizing: border-box; 
+        }
         #status { color: #aaa; height: 25px; text-align: center; margin-bottom: 10px; font-size: 14px; }
         textarea { flex-grow: 1; background: #1e1e1e; color: white; border: 1px solid #333; border-radius: 8px; padding: 15px; font-size: 18px; margin-bottom: 20px; resize: none; width: 100%; box-sizing: border-box; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -31,56 +43,83 @@
         const output = document.getElementById('output');
         const recordBtn = document.getElementById('recordBtn');
         const status = document.getElementById('status');
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhP7RmlHrwSTllteJOaXrhqvp5WTSR-E0fqpz3LnDjtN-w3gYJTiN2ymtXVvcSj6Z1RA/exec"; // <--- METS TON URL ICI
+        // Ton URL de script (ne change pas)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhP7RmlHrwSTllteJOaXrhqvp5WTSR-E0fqpz3LnDjtN-w3gYJTiN2ymtXVvcSj6Z1RA/exec";
 
         let recognition;
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'fr-FR';
+
             recognition.onresult = function(event) {
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                // On n'ajoute au champ texte que si c'est le résultat définitif
-                document.getElementById('votre_textarea').value += event.results[i][0].transcript;
+                let finalText = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalText += event.results[i][0].transcript;
+                    }
                 }
-            }
+                // On ajoute le texte définitif au textarea
+                if (finalText) {
+                    output.value += finalText + " ";
+                }
             };
+
             recognition.onend = () => {
                 recordBtn.classList.remove('recording');
                 recordBtn.innerText = "🎤 DICTER";
+            };
+
+            recognition.onerror = (event) => {
+                status.innerText = "Erreur micro : " + event.error;
+                recordBtn.classList.remove('recording');
             };
         }
 
         function toggleRecord() {
             if (recordBtn.classList.contains('recording')) {
                 recognition.stop();
+                status.innerText = "Micro arrêté";
             } else {
                 recordBtn.classList.add('recording');
                 recordBtn.innerText = "🛑 ARRÊTER";
+                status.innerText = "Écoute en cours...";
                 recognition.start();
             }
         }
 
-        function clearText() { output.value = ""; status.innerText = "Effacé"; }
+        function clearText() { 
+            output.value = ""; 
+            status.innerText = "Effacé"; 
+        }
 
         function sendToGmail() {
-            const text = output.value;
-            if (!text) return alert("Message vide");
+            const text = output.value.trim();
+            if (!text) {
+                status.innerText = "Message vide !";
+                return;
+            }
             status.innerText = "Envoi...";
             
-            // Utilisation d'un formulaire pour éviter les soucis de CORS avec Apps Script
+            // On repasse sur FormData qui est plus simple pour Apps Script
             const formData = new FormData();
             formData.append("content", text);
 
-            fetch(SCRIPT_URL, { method: "POST", body: formData, mode: "no-cors" })
+            fetch(SCRIPT_URL, { 
+                method: "POST", 
+                mode: "no-cors", 
+                body: formData 
+            })
             .then(() => {
                 status.innerText = "Note envoyée !";
                 output.value = "";
             })
-            .catch(err => status.innerText = "Erreur d'envoi");
+            .catch(err => {
+                status.innerText = "Erreur d'envoi";
+                console.error(err);
+            });
         }
     </script>
 </body>
