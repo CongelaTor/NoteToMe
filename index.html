@@ -39,15 +39,18 @@
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'fr-FR';
-            recognition.onresult = (e) => {
-                let transcript = '';
-                for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) output.value += e.results[i][0].transcript + ' ';
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                    // On n'ajoute au champ texte que si c'est le résultat définitif
+                    document.getElementById('votre_textarea').value += event.results[i][0].transcript;
+                    }
                 }
-            };
+                };
             recognition.onend = () => {
-                recordBtn.classList.remove('recording');
-                recordBtn.innerText = "🎤 DICTER";
+            recordBtn.classList.remove('recording');
+            recordBtn.innerText = "🎤 DICTER";
             };
         }
 
