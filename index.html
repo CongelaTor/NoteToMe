@@ -46,6 +46,10 @@
         // Ton URL de script (ne change pas)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzhP7RmlHrwSTllteJOaXrhqvp5WTSR-E0fqpz3LnDjtN-w3gYJTiN2ymtXVvcSj6Z1RA/exec";
 
+        // Récupère la date de dernière modif du fichier
+        const lastMod = new Date(document.lastModified);
+        const heureMod = lastMod.getHours().toString().padStart(2, '0') + ":" + lastMod.getMinutes().toString().padStart(2, '0');
+        
         let recognition;
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -69,7 +73,7 @@
 
             recognition.onend = () => {
                 recordBtn.classList.remove('recording');
-                recordBtn.innerText = "🎤 DICTER";
+                recordBtn.innerText = "🎤 DICTER heureMod";
             };
 
             recognition.onerror = (event) => {
