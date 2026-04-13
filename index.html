@@ -44,10 +44,13 @@
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                     // On n'ajoute au champ texte que si c'est le résultat définitif
-                    document.getElementById('votre_textarea').value += event.results[i][0].transcript;
+                    interimTranscript = event.results[i][0].transcript;
                     }
                 }
                 };
+
+            // On n'ajoute au champ texte que si c'est le résultat définitif
+            document.getElementById('votre_textarea').value = interimTranscript;
             recognition.onend = () => {
             recordBtn.classList.remove('recording');
             recordBtn.innerText = "🎤 DICTER";
